@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+#プレーヤーのカードを管理するクラス
 class Hand
   def initialize
     @cards = []
@@ -31,6 +32,7 @@ class Hand
   end
 end
 
+# ブラックジャック進行クラス
 class BlackJack
   def initialize
     @player = Hand.new
@@ -88,8 +90,10 @@ class BlackJack
 
     player_cards = @player.current_cards
     dealer_cards = @dealer.current_cards
-    p "あなたの引いたカードは#{player_cards[0][:suit]}の#{player_cards[0][:number]}と#{player_cards[1][:suit]}の#{player_cards[0][:number]}です"
-    p "ディーラーの引いたカードは#{dealer_cards[0][:suit]}の#{dealer_cards[0][:number]}ともう一枚のカードはわかりません"
+    p "あなたの引いたカードは#{player_cards[0][:suit]}の#{player_cards[0][:number]}と" \
+    "#{player_cards[1][:suit]}の#{player_cards[1][:number]}です"
+  p "ディーラーの引いたカードは#{dealer_cards[0][:suit]}の" \
+    "#{dealer_cards[0][:number]}ともう一枚のカードはわかりません"  
   end
 
   def deal_card_to_player
@@ -111,6 +115,7 @@ class BlackJack
     @dealer.add_card(Card.random_card) while @dealer.calculate_total < 17
   end
 
+  #カードの中身を決めるクラス
   class Card
     def self.random_card
       suits = %w[ハート ダイヤ スペード クラブ]
