@@ -93,9 +93,7 @@ class BlackJack
         @player.add_card(Card.new)
         p "あなたの引いたカードは#{@player.current_cards.last.to_card_name}です."
       end
-      break if user_input == 'n'
-
-      p '無効な入力です。カードを引きますか？(y/n)' if user_input != 'y' || user_input != 'n'
+      return if user_input == 'n'
     end
   end
 
