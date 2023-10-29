@@ -104,6 +104,7 @@ class BlackJack
   # カードの中身を決めるクラス
   class Card
     attr_reader :suit, :number
+
     SUITS = %w[ハート ダイヤ スペード クラブ].freeze
     NUMBERS = [2, 3, 4, 5, 6, 7, 8, 9, 'ジャック', 'クイーン', 'キング', 'A'].freeze
     def initialize
@@ -118,7 +119,6 @@ class BlackJack
                   initial_number.to_i
                 end
     end
-    
 
     def to_card_name
       "#{@suit}の#{@number}"
