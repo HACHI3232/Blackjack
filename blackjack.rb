@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-#プレーヤーのカードを管理するクラス
+# プレーヤーのカードを管理するクラス
 class Hand
   def initialize
     @cards = []
@@ -11,13 +11,8 @@ class Hand
   end
 
   def calculate_total
-    total = 0
-    aces = 0
-
-    @cards.each do |card|
-      total += card[:number]
-      aces += 1 if card[:number] == 1
-    end
+    total = sum_of_card_values
+    aces = count_aces
 
     while aces.positive? && total + 10 <= 21
       total += 10
@@ -27,8 +22,24 @@ class Hand
     total
   end
 
+  def sum_of_card_values
+    @cards.map { |card| card.to_hash[:number] }.sum
+  end
+
+  def count_aces
+    @cards.count { |card| card.to_hash[:number] == 1 }
+  end
+
   def current_cards
     @cards
+  end
+
+  def current_cards_to_name
+    @cards.map.with_index { |card, index| "#{card.to_card_name}#{index.zero? ? 'と' : nil}" }.join('')
+  end
+
+  def cards_to_name_for_dealer
+    @cards.first.to_card_name.to_s
   end
 end
 
@@ -51,13 +62,10 @@ class BlackJack
     dealer_score = @dealer.calculate_total
     p "あなたの得点は#{player_score}です"
     p "ディーラーの得点は#{dealer_score}です"
-    if player_score > 21
-      p 'バーストしました！あなたの負けです'
-    elsif dealer_score > 21 || player_score > dealer_score
-      p 'あなたの勝ちです'
-    else
-      p 'ディーラーの勝ちです'
-    end
+    return p 'バーストしました！あなたの負けです' if player_score > 21
+    return p 'あなたの勝ちです' if dealer_score > 21 || player_score > dealer_score
+
+    p 'ディーラーの勝ちです'
   end
 
   def adjust_ace_value(score, cards)
@@ -68,70 +76,58 @@ class BlackJack
     score
   end
 
-  def self.calculate_total(cards)
-    total = 0
-    aces = 0
-    cards.each do |card|
-      total += card[:number]
-      aces = 1 if card[:number] == 1
-    end
-    while aces.positive? && total <= 21
-      total += 10
-      aces -= 1
-    end
-    total
-  end
-
   def deal_first_card_to_both
-    @player.add_card(Card.random_card)
-    @player.add_card(Card.random_card)
-    @dealer.add_card(Card.random_card)
-    @dealer.add_card(Card.random_card)
-
-    player_cards = @player.current_cards
-    dealer_cards = @dealer.current_cards
-    p "あなたの引いたカードは#{player_cards[0][:suit]}の#{player_cards[0][:number]}と" \
-    "#{player_cards[1][:suit]}の#{player_cards[1][:number]}です"
-  p "ディーラーの引いたカードは#{dealer_cards[0][:suit]}の" \
-    "#{dealer_cards[0][:number]}ともう一枚のカードはわかりません"  
+    2.times do
+      @player.add_card(Card.new)
+      @dealer.add_card(Card.new)
+    end
+    p "あなたの引いたカードは#{@player.current_cards_to_name}です"
+    p "ディーラーの引いたカードは#{@dealer.cards_to_name_for_dealer}ともう一枚のカードはわかりません"
   end
 
   def deal_card_to_player
     while @player.calculate_total < 21
       p "あなたの現在の得点は#{@player.calculate_total}です。カードを引きますか？(y/n)"
-      user_input = gets.chomp
-      if user_input.downcase == 'y'
-        @player.add_card(Card.random_card)
-        p "あなたの引いたカードは#{@player.current_cards.last[:suit]}の#{@player.current_cards.last[:number]}です."
-      elsif user_input.downcase == 'n'
-        break
-      else
-        p '無効な入力です。カードを引きますか？(y/n)'
+      user_input = gets.chomp.downcase
+      if user_input == 'y'
+        @player.add_card(Card.new)
+        p "あなたの引いたカードは#{@player.current_cards.last.to_card_name}です."
       end
+      break if user_input == 'n'
+
+      p '無効な入力です。カードを引きますか？(y/n)' if user_input != 'y' || user_input != 'n'
     end
   end
 
   def deal_card_to_dealer
-    @dealer.add_card(Card.random_card) while @dealer.calculate_total < 17
+    @dealer.add_card(Card.new) while @dealer.calculate_total < 17
   end
 
-  #カードの中身を決めるクラス
+  # カードの中身を決めるクラス
   class Card
-    def self.random_card
-      suits = %w[ハート ダイヤ スペード クラブ]
-      numbers = [2, 3, 4, 5, 6, 7, 8, 9, 'ジャック', 'クイーン', 'キング', 'A']
-      suit = suits.sample
-      number = numbers.sample
+    attr_reader :suit, :number
+    SUITS = %w[ハート ダイヤ スペード クラブ].freeze
+    NUMBERS = [2, 3, 4, 5, 6, 7, 8, 9, 'ジャック', 'クイーン', 'キング', 'A'].freeze
+    def initialize
+      @suit = SUITS.sample
+      initial_number = NUMBERS.sample
+      @number = case initial_number
+                when 'ジャック', 'クイーン', 'キング'
+                  10
+                when 'A'
+                  [1, 11].sample
+                else
+                  initial_number.to_i
+                end
+    end
+    
 
-      number = case number
-               when 'ジャック', 'クイーン', 'キング'
-                 number = 10
-               when 'A'
-                 [1, 11].sample
-               else number.to_i
-               end
+    def to_card_name
+      "#{@suit}の#{@number}"
+    end
 
-      { suit: suit, number: number }
+    def to_hash
+      { suit: @suit, number: @number }
     end
   end
 end
